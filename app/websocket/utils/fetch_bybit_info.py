@@ -3,7 +3,6 @@ import json
 
 
 async def fetch_bybit_info(symbol: str, interval: str):
-    """Подключение к Bybit WebSocket API и вывод данных в консоль"""
     url = "wss://stream.bybit.com/v5/public/linear"
     subscription_params = {"op": "subscribe", "args": [f"kline.{interval}.{symbol}"]}
 
@@ -16,9 +15,12 @@ async def fetch_bybit_info(symbol: str, interval: str):
                 response = await ws.recv()
                 data = json.loads(response)
 
-                print(" ")
-                print(data)
-                print(" ")
+                try:
+                    print(" ")
+                    print(data["data"])
+                    print(" ")
+                except Exception as e:
+                    pass
 
     except websockets.exceptions.ConnectionClosedError as e:
         print(f"Connection to Bybit WebSocket closed: {e}")
