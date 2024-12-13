@@ -1,5 +1,6 @@
 import websockets
 import json
+from ..schemas import klineData, klineResponse
 
 
 async def fetch_bybit_info(symbol: str, interval: str):
@@ -13,14 +14,14 @@ async def fetch_bybit_info(symbol: str, interval: str):
 
             while True:
                 response = await ws.recv()
-                data = json.loads(response)
 
-                try:
+                klineInfo: klineResponse = json.loads(response)
+
+                if "data" in klineInfo:
+                    data: klineData = klineInfo["data"]
                     print(" ")
-                    print(data["data"])
-                    print(" ")
-                except Exception as e:
-                    pass
+                    print(data)
+                    print(type(data))
 
     except websockets.exceptions.ConnectionClosedError as e:
         print(f"Connection to Bybit WebSocket closed: {e}")
