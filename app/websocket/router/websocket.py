@@ -8,7 +8,7 @@ tasks = {}
 
 
 @router.get("/candles")
-async def get_candles(symbol: str, interval: str):
+async def get_candles(symbol: str = "BTCUSDT", interval: str = "1"):
     """Маршрут для запуска задачи получения свечей"""
     task_id = f"{symbol}_{interval}"
     if task_id in tasks:
@@ -22,7 +22,7 @@ async def get_candles(symbol: str, interval: str):
 
 
 @router.get("/stop_candles")
-async def stop_candles(symbol: str, interval: str):
+async def stop_candles(symbol: str = "BTCUSDT", interval: str = "1"):
     """Маршрут для остановки задачи получения свечей"""
     task_id = f"{symbol}_{interval}"
     task = tasks.get(task_id)
