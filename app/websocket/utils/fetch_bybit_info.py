@@ -2,6 +2,7 @@ import websockets
 import json
 from ..schemas import klineData, klineResponse
 from ...computer.chaikin_osc import chaikin_osc
+import pandas as pd
 
 
 async def fetch_bybit_info(symbol: str, interval: str):
@@ -29,8 +30,21 @@ async def fetch_bybit_info(symbol: str, interval: str):
                         counter += 1
                         print(f"Counter: {counter}")
                         print(" ")
-                        if len(confirmed_data) >= 5:
-                            chaikin_osc(confirmed_data)
+                        df = pd.DataFrame(data, index=[0])
+                        print(
+                            df[
+                                [
+                                    "open",
+                                    "high",
+                                    "low",
+                                    "close",
+                                    "volume",
+                                ]
+                            ]
+                        )
+                        if len(confirmed_data) >= 10:
+                            pass
+                            # chaikin_osc(confirmed_data)
                     else:
                         pass
 
