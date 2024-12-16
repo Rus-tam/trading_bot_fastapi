@@ -14,7 +14,9 @@ def chaikin_osc(confirmed_data: List[klineData]):
         data["volume"] = float(data["volume"])
         dataframes.append(pd.DataFrame(data, index=[0]))
 
-    df = pd.concat(dataframes, ignore_index=True)
+    initial_df = pd.concat(dataframes, ignore_index=True)
+
+    df = initial_df.iloc[::-1].reset_index(drop=True)
 
     # 1. Рассчитать Money Flow Multiplier
     df["mf_multiplier"] = ((df["close"] - df["low"]) - (df["high"] - df["close"])) / (
@@ -37,4 +39,4 @@ def chaikin_osc(confirmed_data: List[klineData]):
     # 5. Рассчитать Chaikin Oscillator
     df["chaikin_oscillator"] = df["ema_short"] - df["ema_long"]
 
-    print(df[["open", "high", "low", "close", "volume", "chaikin_oscillator"]])
+    print(df[["time", "open", "high", "low", "close", "volume", "chaikin_oscillator"]])

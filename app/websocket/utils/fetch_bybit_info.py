@@ -53,7 +53,13 @@ async def fetch_bybit_info(symbol: str, interval: str):
 
                             historical_kline = await fetch_bybit_data(endpoint, params)
 
-                            print(historical_kline["result"]["list"])
+                            kline_data_historical = format_kline_data(historical_kline)
+
+                        kline_data_historical.insert(0, formatted_data)
+
+                        # kline_data_historical.append(formatted_data)
+
+                        chaikin_osc(kline_data_historical)
 
                     # if data["confirm"]:
                     #     confirmed_data.append(data)
