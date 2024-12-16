@@ -6,6 +6,7 @@ import pandas as pd
 from .format_kline_ws_data import format_kline_ws_data
 from ...http.utils.fetch_bybit_data import fetch_bybit_data
 from ...http.utils.format_kline_data import format_kline_data
+import itertools
 
 
 async def fetch_bybit_info(symbol: str, interval: str):
@@ -16,6 +17,7 @@ async def fetch_bybit_info(symbol: str, interval: str):
     first_timestamp = 0
     start_time = 0
     end_time = 0
+    historical_kline = []
     kline_data_historical = []
 
     try:
@@ -38,28 +40,57 @@ async def fetch_bybit_info(symbol: str, interval: str):
                         # Вычисления временных отрезков для произведения http запроса
                         if first_timestamp == 0:
                             first_timestamp = data["end"]
-                            start_time = first_timestamp - 1000 * 60000
-                            end_time = first_timestamp - 60000
+                            # start_time = first_timestamp - 1000 * 60000
+                            # end_time = first_timestamp - 60000
 
-                            endpoint = "/v5/market/kline"
-                            params = {
-                                "category": "spot",
-                                "symbol": symbol,
-                                "interval": interval,
-                                "start": start_time,
-                                "end": end_time,
-                                "limit": 1000,
-                            }
+                            # endpoint = "/v5/market/kline"
+                            # params = {
+                            #     "category": "spot",
+                            #     "symbol": symbol,
+                            #     "interval": interval,
+                            #     "start": start_time,
+                            #     "end": end_time,
+                            #     "limit": 1000,
+                            # }
 
-                            historical_kline = await fetch_bybit_data(endpoint, params)
+                            for i in range(1, 4):
+                                start_time = first_timestamp - 1000 * 60000 * i
+                                end_time = first_timestamp - 60000 * i
 
-                            kline_data_historical = format_kline_data(historical_kline)
+                                endpoint = "/v5/market/kline"
+                                params = {
+                                    "category": "spot",
+                                    "symbol": symbol,
+                                    "interval": interval,
+                                    "start": start_time,
+                                    "end": end_time,
+                                    "limit": 1000,
+                                }
 
-                        kline_data_historical.insert(0, formatted_data)
+                                historical_data = await fetch_bybit_data(
+                                    endpoint, params
+                                )
+                                historical_data_formated = format_kline_data(
+                                    historical_data
+                                )
+
+                                combined = itertools.chain(
+                                    historical_kline, historical_data_formated
+                                )
+
+                                historical_kline = list(combined)
+
+                            # historical_kline = await fetch_bybit_data(endpoint, params)
+
+                            # kline_data_historical = format_kline_data(historical_kline)
+
+                        # kline_data_historical.insert(0, formatted_data)
+                        historical_kline.insert(0, formatted_data)
+                        chaikin_osc(historical_kline)
 
                         # kline_data_historical.append(formatted_data)
 
-                        chaikin_osc(kline_data_historical)
+                        # chaikin_osc(kline_data_historical)
 
                     # if data["confirm"]:
                     #     confirmed_data.append(data)
