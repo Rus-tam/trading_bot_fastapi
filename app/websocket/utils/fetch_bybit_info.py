@@ -3,6 +3,7 @@ import json
 from ..schemas import klineData, klineResponse
 from ...computer.chaikin_osc import chaikin_osc
 import pandas as pd
+from .format_kline_ws_data import format_kline_ws_data
 
 
 async def fetch_bybit_info(symbol: str, interval: str):
@@ -25,28 +26,33 @@ async def fetch_bybit_info(symbol: str, interval: str):
                 if "data" in klineInfo:
                     data: klineData = klineInfo["data"][0]
 
-                    if data["confirm"]:
-                        confirmed_data.append(data)
-                        counter += 1
-                        print(f"Counter: {counter}")
-                        print(" ")
-                        df = pd.DataFrame(data, index=[0])
-                        print(
-                            df[
-                                [
-                                    "open",
-                                    "high",
-                                    "low",
-                                    "close",
-                                    "volume",
-                                ]
-                            ]
-                        )
-                        if len(confirmed_data) >= 10:
-                            pass
-                            # chaikin_osc(confirmed_data)
-                    else:
-                        pass
+                    formatted_data = format_kline_ws_data(data)
+
+                    print(formatted_data)
+                    print(" ")
+
+                    # if data["confirm"]:
+                    #     confirmed_data.append(data)
+                    #     counter += 1
+                    #     print(f"Counter: {counter}")
+                    #     print(" ")
+                    #     df = pd.DataFrame(data, index=[0])
+                    #     print(
+                    #         df[
+                    #             [
+                    #                 "open",
+                    #                 "high",
+                    #                 "low",
+                    #                 "close",
+                    #                 "volume",
+                    #             ]
+                    #         ]
+                    #     )
+                    #     if len(confirmed_data) >= 10:
+                    #         pass
+                    #         chaikin_osc(confirmed_data)
+                    # else:
+                    #     pass
 
     except websockets.exceptions.ConnectionClosedError as e:
         print(f"Connection to Bybit WebSocket closed: {e}")
