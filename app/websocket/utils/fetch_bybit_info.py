@@ -6,6 +6,7 @@ import pandas as pd
 from .format_kline_ws_data import format_kline_ws_data
 from ...http.utils.fetch_bybit_data import fetch_bybit_data
 from ...http.utils.format_kline_data import format_kline_data
+from ...computer.rsi import calculate_rsi
 import itertools
 
 
@@ -53,7 +54,7 @@ async def fetch_bybit_info(symbol: str, interval: str):
                             #     "limit": 1000,
                             # }
 
-                            for i in range(1, 4):
+                            for i in range(1, 2):
                                 start_time = first_timestamp - 1000 * 60000 * i
                                 end_time = first_timestamp - 60000 * i
 
@@ -80,40 +81,9 @@ async def fetch_bybit_info(symbol: str, interval: str):
 
                                 historical_kline = list(combined)
 
-                            # historical_kline = await fetch_bybit_data(endpoint, params)
-
-                            # kline_data_historical = format_kline_data(historical_kline)
-
-                        # kline_data_historical.insert(0, formatted_data)
-                        historical_kline.insert(0, formatted_data)
-                        chaikin_osc(historical_kline)
-
-                        # kline_data_historical.append(formatted_data)
-
-                        # chaikin_osc(kline_data_historical)
-
-                    # if data["confirm"]:
-                    #     confirmed_data.append(data)
-                    #     counter += 1
-                    #     print(f"Counter: {counter}")
-                    #     print(" ")
-                    #     df = pd.DataFrame(data, index=[0])
-                    #     print(
-                    #         df[
-                    #             [
-                    #                 "open",
-                    #                 "high",
-                    #                 "low",
-                    #                 "close",
-                    #                 "volume",
-                    #             ]
-                    #         ]
-                    #     )
-                    #     if len(confirmed_data) >= 10:
-                    #         pass
-                    #         chaikin_osc(confirmed_data)
-                    # else:
-                    #     pass
+                        # historical_kline.insert(0, formatted_data)
+                        # chaikin_osc(historical_kline)
+                        calculate_rsi(historical_kline)
 
     except websockets.exceptions.ConnectionClosedError as e:
         print(f"Connection to Bybit WebSocket closed: {e}")
