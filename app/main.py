@@ -1,9 +1,5 @@
 from fastapi import FastAPI
-from .websocket.router import websocket
-from .http.router import http
+from .core.config import settings
 
 
-app = FastAPI()
-
-app.include_router(websocket.router)
-app.include_router(http.router)
+app = FastAPI(title=settings.app_name)
