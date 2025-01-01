@@ -1,7 +1,7 @@
 import json
 import websockets
 from typing import Optional, Callable
-from .schemas import KlineData
+from .schemas import KlineData, KlineInfo
 
 
 class BinanceService:
@@ -29,11 +29,29 @@ class BinanceService:
                 while True:
                     response = await ws.recv()
 
-                    klineInfo = json.loads(response)
+                    kline = json.loads(response)
+                    if "k" in kline:
+                        klineInfo = self.parse_kline_data(kline)
+                        print(" ")
+                        print(klineInfo)
 
-                    print(" ")
-                    print(klineInfo)
         except websockets.exceptions.ConnectionClosedError as e:
             print(f"Connection to Bybit WebSocket closed: {e}")
         except Exception as e:
             print(f"Error in Bybit WebSocket: {e}")
+
+    def parse_kline_data(self, kline: KlineInfo):
+        return KlineData(
+            open_time=kline["k"]["t"],
+            open=float(kline["k"]["o"]),
+            high=float(kline["k"]["h"]),
+            low=float(kline["k"]["l"]),
+            close=float(kline["k"]["c"]),
+            volume=float(kline["k"]["v"]),
+            close_time=kline["k"]["T"],
+            is_closed=kline["k"]["x"],
+            quote_asset_volume=float(kline["k"]["q"]),
+            number_of_trades=kline["k"]["n"],
+            taker_buy_base_volume=float(kline["k"]["V"]),
+            taker_buy_quote_volume=float(kline["k"]["Q"]),
+        )

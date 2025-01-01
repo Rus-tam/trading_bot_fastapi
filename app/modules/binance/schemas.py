@@ -1,6 +1,33 @@
 from pydantic import BaseModel
 
 
+class Kline(BaseModel):
+    t: int  # Kline start time
+    T: int  # Kline close time
+    s: str  # Symbol
+    i: str  # Interval
+    f: int  # First trade ID
+    L: int  # Last trade ID
+    o: str  # Open price
+    c: str  # Close price
+    h: str  # High price
+    l: str  # Low price
+    v: str  # Base asset volume
+    n: int  # Number of trades
+    x: bool  # Is this kline closed
+    q: str  # Quote asset volume
+    V: str  # Taker buy base asset volume
+    Q: str  # Taker buy quote asset volume
+    B: str  # Ignore
+
+
+class KlineInfo(BaseModel):
+    e: str
+    E: int
+    s: str
+    k: Kline
+
+
 class KlineData(BaseModel):
     open_time: int
     open: float
@@ -9,6 +36,7 @@ class KlineData(BaseModel):
     close: float
     volume: float
     close_time: int
+    is_closed: bool
     quote_asset_volume: float
     number_of_trades: int
     taker_buy_base_volume: float
