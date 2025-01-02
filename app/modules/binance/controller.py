@@ -12,6 +12,7 @@ class BinanceController:
         # Определяем маршруты
         self.router.post("/get_candles")(self.get_candles)
         self.router.post("/disconnect")(self.stop_candles)
+        self.router.get("/http_klines")(self.http_klines)
 
     async def get_candles(self, symbol: str = "BTCUSDT", interval: str = "1m"):
         task_id = f"{symbol}_{interval}"
@@ -40,3 +41,12 @@ class BinanceController:
             f"Прекращаю получение данных по свечам для пары {symbol} с интервалом {interval}"
         )
         return {"status": f"Stopped task for {symbol} with interval {interval}"}
+
+    async def http_klines(
+        self, symbol: str = "BTCUSDT", interval: str = "1m", limit: int = 1000
+    ):
+        data = await self.binance_service.get_historical_kline_data(
+            symbol=symbol, interval=interval, limit=limit
+        )
+
+        print(data)

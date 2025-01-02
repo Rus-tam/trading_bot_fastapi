@@ -1,5 +1,7 @@
 import json
+import httpx
 import websockets
+from datetime import datetime
 from typing import Optional, Callable
 from .schemas import KlineData, KlineInfo
 
@@ -39,6 +41,35 @@ class BinanceService:
             print(f"Connection to Bybit WebSocket closed: {e}")
         except Exception as e:
             print(f"Error in Bybit WebSocket: {e}")
+
+    async def get_historical_kline_data(
+        self, symbol: str, interval: str, limit: int = 1000
+    ):
+        endpoint = "api/v3/klines"
+
+        endTime = int(datetime.utcnow().timestamp() * 1000)
+        params = {
+            "symbol": symbol,
+            "interval": interval,
+            "endTime": endTime,
+            "timeZone": "+5",
+            "limit": limit,
+        }
+
+        async with httpx.AsyncClient() as client:
+            url = f"https://api.binance.com/{endpoint}"
+            try:
+                response = await client.get(url, params=params, timeout=10.0)
+                response.raise_for_status()
+                result = response.json()
+                print(" ")
+                print(result)
+                return result
+
+            except httpx.RequestError as e:
+                return {"error": f"Request failed: {str(e)}"}
+            except httpx.HTTPStatusError as e:
+                return {"error": f"HTTP error: {str(e)}"}
 
     def parse_kline_data(self, kline: KlineInfo):
         return KlineData(
