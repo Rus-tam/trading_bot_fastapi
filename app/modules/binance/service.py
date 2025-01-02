@@ -1,9 +1,11 @@
 import json
 import httpx
 import websockets
+import pandas as pd
 from datetime import datetime
 from typing import Optional, Callable
 from .schemas import KlineData, KlineInfo
+from ..market_processor.service import MarketProcessor
 
 
 class BinanceService:
@@ -12,6 +14,7 @@ class BinanceService:
         self.connection: Optional[websockets.WebSocketClientProtocol] = None
         self.is_running = False
         self.kline_callback: Optional[Callable[[KlineData], None]] = None
+        self.market_processor = MarketProcessor()
 
     async def connect(self, symbol: str, interval: str):
         params = {
@@ -34,8 +37,6 @@ class BinanceService:
                     kline = json.loads(response)
                     if "k" in kline:
                         klineInfo = self.parse_kline_data(kline)
-                        print(" ")
-                        print(klineInfo)
 
         except websockets.exceptions.ConnectionClosedError as e:
             print(f"Connection to Bybit WebSocket closed: {e}")
@@ -71,38 +72,42 @@ class BinanceService:
                 return {"error": f"HTTP error: {str(e)}"}
 
     def parse_kline_data(self, kline: KlineInfo):
-        return KlineData(
-            open_time=self._format_time(kline["k"]["t"]),
-            open=float(kline["k"]["o"]),
-            high=float(kline["k"]["h"]),
-            low=float(kline["k"]["l"]),
-            close=float(kline["k"]["c"]),
-            volume=float(kline["k"]["v"]),
-            close_time=self._format_time(kline["k"]["T"]),
-            is_closed=kline["k"]["x"],
-            quote_asset_volume=float(kline["k"]["q"]),
-            number_of_trades=int(kline["k"]["n"]),
-            taker_buy_base_volume=float(kline["k"]["V"]),
-            taker_buy_quote_volume=float(kline["k"]["Q"]),
-        )
+        kline_data = {
+            "open_time": self._format_time(kline["k"]["t"]),
+            "open": float(kline["k"]["o"]),
+            "high": float(kline["k"]["h"]),
+            "low": float(kline["k"]["l"]),
+            "close": float(kline["k"]["c"]),
+            "volume": float(kline["k"]["v"]),
+            "close_time": self._format_time(kline["k"]["T"]),
+            "is_closed": kline["k"]["x"],
+            "quote_asset_volume": float(kline["k"]["q"]),
+            "number_of_trades": int(kline["k"]["n"]),
+            "taker_buy_base_volume": float(kline["k"]["V"]),
+            "taker_buy_quote_volume": float(kline["k"]["Q"]),
+        }
+        return pd.DataFrame(kline_data, index=[0])
 
     def format_historical_kline(self, row_data):
         formated_klines = []
         for element in row_data:
             formated_klines.append(
-                KlineData(
-                    open_time=self._format_time(element[0]),
-                    open=float(element[1]),
-                    high=float(element[2]),
-                    low=float(element[3]),
-                    close=float(element[4]),
-                    volume=float(element[5]),
-                    close_time=self._format_time(element[6]),
-                    is_closed=True,
-                    quote_asset_volume=float(element[7]),
-                    number_of_trades=int(element[8]),
-                    taker_buy_base_volume=float(element[9]),
-                    taker_buy_quote_volume=float(element[10]),
+                pd.DataFrame(
+                    {
+                        "open_time": self._format_time(element[0]),
+                        "open": float(element[1]),
+                        "high": float(element[2]),
+                        "low": float(element[3]),
+                        "close": float(element[4]),
+                        "volume": float(element[5]),
+                        "close_time": self._format_time(element[6]),
+                        "is_closed": True,
+                        "quote_asset_volume": float(element[7]),
+                        "number_of_trades": int(element[8]),
+                        "taker_buy_base_volume": float(element[9]),
+                        "taker_buy_quote_volume": float(element[10]),
+                    },
+                    index=[0],
                 )
             )
 
