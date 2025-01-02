@@ -43,10 +43,8 @@ class BinanceController:
         return {"status": f"Stopped task for {symbol} with interval {interval}"}
 
     async def http_klines(
-        self, symbol: str = "BTCUSDT", interval: str = "1m", limit: int = 1000
+        self, symbol: str = "BTCUSDT", interval: str = "1m", limit: int = 5
     ):
-        data = await self.binance_service.get_historical_kline_data(
+        await self.binance_service.get_historical_kline_data(
             symbol=symbol, interval=interval, limit=limit
         )
-
-        print(data)

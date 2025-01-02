@@ -29,13 +29,13 @@ class KlineInfo(BaseModel):
 
 
 class KlineData(BaseModel):
-    open_time: int
+    open_time: str
     open: float
     high: float
     low: float
     close: float
     volume: float
-    close_time: int
+    close_time: str
     is_closed: bool
     quote_asset_volume: float
     number_of_trades: int
