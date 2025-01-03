@@ -2,7 +2,7 @@ import json
 import httpx
 import websockets
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Callable
 from .schemas import KlineData, KlineInfo
 from ..market_processor.service import MarketProcessor
@@ -47,10 +47,12 @@ class BinanceService:
         endpoint = "api/v3/klines"
 
         endTime = int(datetime.utcnow().timestamp() * 1000)
+        startTime = endTime - 1000 * 1000 * 60
         params = {
             "symbol": symbol.upper(),
             "interval": interval,
             "endTime": endTime,
+            "startTime": startTime,
             "timeZone": "+5",
             "limit": limit,
         }
@@ -62,9 +64,7 @@ class BinanceService:
                 response.raise_for_status()
                 result = response.json()
                 formatted_result = self.format_historical_kline(result)
-                print(" ")
-                print(formatted_result)
-                return result
+                return formatted_result
 
             except httpx.RequestError as e:
                 return {"error": f"Request failed: {str(e)}"}
@@ -111,15 +111,39 @@ class BinanceService:
                 )
             )
 
+        df = pd.concat(formated_klines, ignore_index=True)
         print(" ")
         print("********************")
-        print(formated_klines)
+        print(df["open_time"])
         print("********************")
         print(" ")
-        return formated_klines
+        return df
 
     def _format_time(self, timestamp_ms):
-        date_time = datetime.utcfromtimestamp(int(timestamp_ms) / 1000)
-        formatted_date = date_time.strftime("%H:%M:%S %d-%Y-%m")
+        gmt_offset = timezone(timedelta(hours=5))  # Ваш часовой пояс GMT+5
+        utc_time = datetime.fromtimestamp(int(timestamp_ms) / 1000, tz=timezone.utc)
+        local_time = utc_time.astimezone(gmt_offset)
+        formatted_date = local_time.strftime("%H:%M:%S %d-%m-%Y")
 
         return formatted_date
+
+    async def server_time(self):
+        """
+        Получить текущее время сервера Binance.
+        Возвращает:
+            str: Читаемый формат времени UTC.
+        """
+        endpoint = "https://api.binance.com/api/v3/time"
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(endpoint)
+                response.raise_for_status()
+                server_time_ms = response.json().get("serverTime")
+
+                # Конвертация времени в UTC
+                server_time = datetime.utcfromtimestamp(server_time_ms / 1000)
+                return server_time.strftime("%Y-%m-%d %H:%M:%S UTC")
+        except httpx.HTTPStatusError as e:
+            raise Exception(f"HTTP Error: {e.response.status_code} - {e.response.text}")
+        except Exception as e:
+            raise Exception(f"Failed to fetch server time: {str(e)}")
