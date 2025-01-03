@@ -25,18 +25,33 @@ class BinanceService:
         try:
             async with websockets.connect(self.websocket_url) as ws:
                 await ws.send(json.dumps(params))
-
                 print(
                     f"Подписка на канал с данными по свечам {symbol} c интервалом {interval}"
                 )
                 print(" ")
-
+                historical_klines = await self.get_historical_kline_data(
+                    symbol=symbol, interval=interval, limit=1000
+                )
+                print(historical_klines)
                 while True:
                     response = await ws.recv()
 
                     kline = json.loads(response)
-                    if "k" in kline:
+                    if "k" in kline and kline["k"]["x"] is True:
                         klineInfo = self.parse_kline_data(kline)
+                        historical_klines = pd.concat(
+                            [historical_klines, klineInfo], ignore_index=True
+                        )
+                        print(" ")
+                        print("*************************")
+                        print(historical_klines)
+                        print("*************************")
+                        print(" ")
+
+                        # if klineInfo["is_closed"] is True:
+                        #     print(" ")
+                        #     print("**********************")
+                        #     print(klineInfo)
 
         except websockets.exceptions.ConnectionClosedError as e:
             print(f"Connection to Bybit WebSocket closed: {e}")
@@ -112,11 +127,6 @@ class BinanceService:
             )
 
         df = pd.concat(formated_klines, ignore_index=True)
-        print(" ")
-        print("********************")
-        print(df["open_time"])
-        print("********************")
-        print(" ")
         return df
 
     def _format_time(self, timestamp_ms):
