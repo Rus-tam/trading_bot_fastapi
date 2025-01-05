@@ -1,6 +1,7 @@
 import asyncio
 from fastapi import APIRouter, HTTPException
 from .service import BinanceService
+from fastapi import Response
 
 
 class BinanceController:
@@ -46,9 +47,11 @@ class BinanceController:
     async def http_klines(
         self, symbol: str = "BTCUSDT", interval: str = "1m", limit: int = 5
     ):
-        await self.binance_service.get_historical_kline_data(
+        klines = await self.binance_service.get_historical_kline_data(
             symbol=symbol, interval=interval, limit=limit
         )
+
+        return Response(klines.to_json(orient="records"), media_type="application/json")
 
     async def server_time(self):
         server_time = await self.binance_service.server_time()
