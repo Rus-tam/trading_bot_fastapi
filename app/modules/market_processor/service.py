@@ -8,7 +8,12 @@ class MarketProcessor:
     def compute_market_indicators(self, df):
         pass
 
-    def chaikin_osc(self, df):
+    def chaikin_osc(self, data):
+        if len(data) > 1005:
+            data = data[5:]
+
+        df = pd.DataFrame([item for item in data])
+
         # 1. Рассчитать Money Flow Multiplier
         df["mf_multiplier"] = (
             (df["close"] - df["low"]) - (df["high"] - df["close"])
@@ -30,4 +35,4 @@ class MarketProcessor:
         # 5. Рассчитать Chaikin Oscillator
         df["chaikin_osc"] = df["ema_short"] - df["ema_long"]
 
-        return df
+        return df, data

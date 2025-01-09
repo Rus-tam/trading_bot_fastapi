@@ -1,8 +1,7 @@
 import json
 import websockets
-import pandas as pd
 from typing import Optional, Callable
-from .schemas import KlineData, KlineInfo
+from .schemas import KlineData
 from ..market_processor.service import MarketProcessor
 from .utils import BinanceUtils
 
@@ -10,6 +9,7 @@ from .utils import BinanceUtils
 class BinanceService:
     def __init__(self):
         self.websocket_url = "wss://stream.binance.com:443/ws"
+        self.http_url = "https://api.binance.com/api/v3/klines"
         self.connection: Optional[websockets.WebSocketClientProtocol] = None
         self.is_running = False
         self.kline_callback: Optional[Callable[[KlineData], None]] = None
@@ -22,6 +22,10 @@ class BinanceService:
             "params": [f"{symbol.lower()}@kline_{interval}"],
         }
 
+        historical_klines = await self.get_historical_kline_data(
+            symbol=symbol, interval=interval, limit=1000
+        )
+
         try:
             async with websockets.connect(self.websocket_url) as ws:
                 await ws.send(json.dumps(params))
@@ -29,23 +33,24 @@ class BinanceService:
                     f"Подписка на канал с данными по свечам {symbol} c интервалом {interval}"
                 )
                 print(" ")
-                historical_klines = await self.get_historical_kline_data(
-                    symbol=symbol, interval=interval, limit=1000
-                )
+
                 while True:
                     response = await ws.recv()
 
                     kline = json.loads(response)
                     if "k" in kline and kline["k"]["x"] is True:
-                        klineInfo = self.parse_kline_data(kline)
-                        historical_klines = pd.concat(
-                            [historical_klines, klineInfo], ignore_index=True
+                        klineInfo = self.binance_utils._parse_kline_data(kline)
+                        historical_klines.append(klineInfo)
+
+                        chaikin, historical_klines = self.market_processor.chaikin_osc(
+                            historical_klines
                         )
 
-                        chaikin = self.market_processor.chaikin_osc(historical_klines)
                         print(" ")
+                        print("**************************")
                         print(chaikin)
                         print(" ")
+                        print("DF LENTH: ", len(chaikin))
 
         except websockets.exceptions.ConnectionClosedError as e:
             print(f"Connection to Bybit WebSocket closed: {e}")
@@ -60,20 +65,3 @@ class BinanceService:
         )
 
         return kline_data
-
-    def parse_kline_data(self, kline: KlineInfo):
-        kline_data = {
-            "open_time": self._format_time(kline["k"]["t"]),
-            "open": float(kline["k"]["o"]),
-            "high": float(kline["k"]["h"]),
-            "low": float(kline["k"]["l"]),
-            "close": float(kline["k"]["c"]),
-            "volume": float(kline["k"]["v"]),
-            "close_time": self._format_time(kline["k"]["T"]),
-            "is_closed": kline["k"]["x"],
-            "quote_asset_volume": float(kline["k"]["q"]),
-            "number_of_trades": int(kline["k"]["n"]),
-            "taker_buy_base_volume": float(kline["k"]["V"]),
-            "taker_buy_quote_volume": float(kline["k"]["Q"]),
-        }
-        return pd.DataFrame(kline_data, index=[0])
