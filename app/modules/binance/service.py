@@ -46,11 +46,13 @@ class BinanceService:
                             historical_klines
                         )
 
+                        rsi = self.market_processor.rsi(chaikin, period=14)
+
                         print(" ")
                         print("**************************")
-                        print(chaikin)
+                        print(rsi)
                         print(" ")
-                        print("DF LENTH: ", len(chaikin))
+                        print("DF LENTH: ", len(rsi))
 
         except websockets.exceptions.ConnectionClosedError as e:
             print(f"Connection to Bybit WebSocket closed: {e}")

@@ -36,3 +36,22 @@ class MarketProcessor:
         df["chaikin_osc"] = df["ema_short"] - df["ema_long"]
 
         return df, data
+
+    def rsi(self, df, period=14):
+        # Разница между текущей и предыдущей ценой закрытия
+        df["delta"] = df["close"].diff()
+        # Приросты (положительные изменения)
+        df["gain"] = df["delta"].where(df["delta"] > 0, 0)
+
+        # Потери (отрицательные изменения)
+        df["loss"] = -df["delta"].where(df["delta"] < 0, 0)
+
+        # Скользящее среднее приростов и потерь
+        df["avg_gain"] = df["gain"].rolling(window=period, min_periods=1).mean()
+        df["avg_loss"] = df["loss"].rolling(window=period, min_periods=1).mean()
+
+        # Отношение приростов к потерям
+        df["rs"] = df["avg_gain"] / df["avg_loss"]
+        df["RSI"] = 100 - (100 / (1 + df["rs"]))  # Формула RSI
+
+        return df
