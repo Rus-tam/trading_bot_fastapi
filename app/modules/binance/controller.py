@@ -53,6 +53,4 @@ class BinanceController:
         return klines
 
     async def server_time(self):
-        server_time = await self.binance_service.server_time()
-
-        return server_time
+        return await self.binance_service.get_server_time()

@@ -4,12 +4,15 @@ from typing import Optional, Callable
 from .schemas import KlineData
 from ..market_processor.service import MarketProcessor
 from .utils import BinanceUtils
+from ...core.config import settings
+from datetime import datetime
 
 
 class BinanceService:
     def __init__(self):
-        self.websocket_url = "wss://stream.binance.com:443/ws"
-        self.http_url = "https://api.binance.com/api/v3/klines"
+        self.websocket_url = f"{settings.websocket_url}"
+        self.http_url = f"{settings.historical_kline_url}"
+        self.server_time_url = f"{settings.server_time_url}"
         self.connection: Optional[websockets.WebSocketClientProtocol] = None
         self.is_running = False
         self.kline_callback: Optional[Callable[[KlineData], None]] = None
@@ -79,10 +82,15 @@ class BinanceService:
             print(f"Error in Bybit WebSocket: {e}")
 
     async def get_historical_kline_data(self, symbol: str, interval: str, limit: int):
-        url = "https://api.binance.com/api/v3/klines"
-
         kline_data = await self.binance_utils.get_bybit_kline(
-            url, symbol=symbol, interval=interval, limit=limit
+            self.http_url, symbol=symbol, interval=interval, limit=limit
         )
 
         return kline_data
+
+    async def get_server_time(self):
+        responce = await self.binance_utils.general_request(self.server_time_url)
+        server_time_ms = responce.get("serverTime")
+        server_time = datetime.utcfromtimestamp(server_time_ms / 1000)
+
+        return server_time.strftime("%Y-%m-%d %H:%M:%S UTC")

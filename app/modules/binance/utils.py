@@ -1,11 +1,12 @@
 import httpx
 from datetime import datetime
 from .schemas import KlineInfo
+from ...core.config import settings
 
 
 class BinanceUtils:
     def __init__(self):
-        pass
+        self.server_time_url = f"{settings.server_time_url}"
 
     async def _fetch_data(self, url, params):
         async with httpx.AsyncClient() as client:
@@ -79,29 +80,15 @@ class BinanceUtils:
         }
         return kline_data
 
-    async def server_time(self):
-        """
-        Получить текущее время сервера Binance.
-        Возвращает:
-            str: Читаемый формат времени UTC.
-        """
-        endpoint = "https://api.binance.com/api/v3/time"
+    # Дублирует метод _fetch_data
+    async def general_request(self, endpoint: str):
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(endpoint)
                 response.raise_for_status()
-                server_time_ms = response.json().get("serverTime")
 
-                # Конвертация времени в UTC
-                server_time = datetime.utcfromtimestamp(server_time_ms / 1000)
-                return server_time.strftime("%Y-%m-%d %H:%M:%S UTC")
+                return response.json()
         except httpx.HTTPStatusError as e:
             raise Exception(f"HTTP Error: {e.response.status_code} - {e.response.text}")
         except Exception as e:
-            raise Exception(f"Failed to fetch server time: {str(e)}")
-
-    def check_df_length(self, data):
-        if len(data) > 1005:
-            return data[5:]
-        else:
-            return data
+            raise Exception(f"Failed to fetch server info: {str(e)}")
