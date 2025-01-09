@@ -14,6 +14,7 @@ class BinanceController:
         self.router.post("/disconnect")(self.stop_candles)
         self.router.get("/http_klines")(self.http_klines)
         self.router.get("/server_time")(self.server_time)
+        self.router.get("/account_info")(self.account_info)
 
     async def get_candles(self, symbol: str = "BTCUSDT", interval: str = "1m"):
         task_id = f"{symbol}_{interval}"
@@ -54,3 +55,6 @@ class BinanceController:
 
     async def server_time(self):
         return await self.binance_service.get_server_time()
+
+    async def account_info(self):
+        await self.binance_service.get_account_info()

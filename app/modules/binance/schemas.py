@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Union, Optional
 
 
 class Kline(BaseModel):
@@ -41,3 +42,13 @@ class KlineData(BaseModel):
     number_of_trades: int
     taker_buy_base_volume: float
     taker_buy_quote_volume: float
+
+
+class AccountInfoParams(BaseModel):
+    omitZeroBalances: bool
+    recvWindow: Optional[int]
+    timestamp: int
+
+
+class CryptoRequestParams(BaseModel):
+    params: Union[AccountInfoParams]

@@ -5,19 +5,22 @@ from .schemas import KlineData
 from ..market_processor.service import MarketProcessor
 from .utils import BinanceUtils
 from ...core.config import settings
-from datetime import datetime
+from .crypto import Crypto
 
 
 class BinanceService:
     def __init__(self):
+        self.base_url = f"{settings.base_url}"
         self.websocket_url = f"{settings.websocket_url}"
         self.http_url = f"{settings.historical_kline_url}"
         self.server_time_url = f"{settings.server_time_url}"
+        self.api_key = f"{settings.api_key}"
         self.connection: Optional[websockets.WebSocketClientProtocol] = None
         self.is_running = False
         self.kline_callback: Optional[Callable[[KlineData], None]] = None
         self.market_processor = MarketProcessor()
         self.binance_utils = BinanceUtils()
+        self.crypto = Crypto()
 
     async def connect(self, symbol: str, interval: str):
         params = {
@@ -91,6 +94,8 @@ class BinanceService:
     async def get_server_time(self):
         responce = await self.binance_utils.general_request(self.server_time_url)
         server_time_ms = responce.get("serverTime")
-        server_time = datetime.utcfromtimestamp(server_time_ms / 1000)
 
-        return server_time.strftime("%Y-%m-%d %H:%M:%S UTC")
+        return server_time_ms
+
+    async def get_account_info(self):
+        pass
