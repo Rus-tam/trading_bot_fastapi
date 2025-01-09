@@ -48,11 +48,30 @@ class BinanceService:
 
                         rsi = self.market_processor.rsi(chaikin, period=14)
 
+                        sma = self.market_processor.sma(rsi, period=9)
+
+                        macd = self.market_processor.macd(
+                            sma, short_window=12, long_window=26, signal_window=9
+                        )
+
                         print(" ")
                         print("**************************")
-                        print(rsi)
-                        print(" ")
-                        print("DF LENTH: ", len(rsi))
+                        print(
+                            macd[
+                                [
+                                    "close_time",
+                                    "open",
+                                    "close",
+                                    "volume",
+                                    "chaikin_osc",
+                                    "RSI",
+                                    "SMA",
+                                    "MACD",
+                                    "Signal_Line",
+                                    "Histogram",
+                                ]
+                            ]
+                        )
 
         except websockets.exceptions.ConnectionClosedError as e:
             print(f"Connection to Bybit WebSocket closed: {e}")
