@@ -1,6 +1,7 @@
 import asyncio
 from fastapi import APIRouter, HTTPException
 from .service import BinanceService
+from .schemas import ServerTimeResponce
 
 
 class BinanceController:
@@ -12,9 +13,7 @@ class BinanceController:
         # Определяем маршруты
         self.router.post("/get_candles")(self.get_candles)
         self.router.post("/disconnect")(self.stop_candles)
-        self.router.get("/http_klines")(self.http_klines)
         self.router.get("/server_time")(self.server_time)
-        self.router.get("/account_info")(self.account_info)
 
     async def get_candles(self, symbol: str = "BTCUSDT", interval: str = "1m"):
         task_id = f"{symbol}_{interval}"
@@ -44,17 +43,8 @@ class BinanceController:
         )
         return {"status": f"Stopped task for {symbol} with interval {interval}"}
 
-    async def http_klines(
-        self, symbol: str = "BTCUSDT", interval: str = "1m", limit: int = 5
-    ):
-        klines = await self.binance_service.get_historical_kline_data(
-            symbol=symbol, interval=interval, limit=limit
-        )
-
-        return klines
-
-    async def server_time(self):
-        return await self.binance_service.get_server_time()
-
-    async def account_info(self):
-        await self.binance_service.get_account_info()
+    async def server_time(self) -> ServerTimeResponce:
+        try:
+            return await self.binance_service.get_server_time()
+        except RuntimeError as e:
+            raise HTTPException(status_code=500, detail=str(e))

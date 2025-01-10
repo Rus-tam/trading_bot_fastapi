@@ -1,11 +1,14 @@
+import uuid
 import json
 import websockets
+from websockets import connect
 from typing import Optional, Callable
 from .schemas import KlineData
 from ..market_processor.service import MarketProcessor
 from .utils import BinanceUtils
 from ...core.config import settings
 from .crypto import Crypto
+from .schemas import ServerTimeResponce
 
 
 class BinanceService:
@@ -91,11 +94,21 @@ class BinanceService:
 
         return kline_data
 
-    async def get_server_time(self):
-        responce = await self.binance_utils.general_request(self.server_time_url)
-        server_time_ms = responce.get("serverTime")
+    async def get_server_time(self) -> ServerTimeResponce:
+        async with connect("wss://ws-api.testnet.binance.vision/ws-api/v3") as ws:
+            # Генерируем уникальный идентификатор
+            request_id = str(uuid.uuid4())
+            request = {"id": request_id, "method": "time"}
 
-        return server_time_ms
+            # Отправляем запрос через WebSocket
+            await ws.send(json.dumps(request))
 
-    async def get_account_info(self):
-        pass
+            # Ожидаем ответ
+            while True:
+                try:
+                    message = await ws.recv()
+                    response = json.loads(message)
+                    if response.get("id") == request_id and "result" in response:
+                        return response["result"]
+                except Exception as e:
+                    raise RuntimeError("Ошибка получения времени с API") from e

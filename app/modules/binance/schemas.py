@@ -44,11 +44,5 @@ class KlineData(BaseModel):
     taker_buy_quote_volume: float
 
 
-class AccountInfoParams(BaseModel):
-    omitZeroBalances: bool
-    recvWindow: Optional[int]
-    timestamp: int
-
-
-class CryptoRequestParams(BaseModel):
-    params: Union[AccountInfoParams]
+class ServerTimeResponce(BaseModel):
+    serverTime: int
