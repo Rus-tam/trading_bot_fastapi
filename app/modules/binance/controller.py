@@ -11,9 +11,10 @@ class BinanceController:
         self.tasks = {}
 
         # Определяем маршруты
-        self.router.post("/get_candles")(self.get_candles)
-        self.router.post("/disconnect")(self.stop_candles)
+        self.router.get("/get_candles")(self.get_candles)
+        self.router.get("/disconnect")(self.stop_candles)
         self.router.get("/server_time")(self.server_time)
+        self.router.get("/account_info")(self.account_info)
 
     async def get_candles(self, symbol: str = "BTCUSDT", interval: str = "1m"):
         task_id = f"{symbol}_{interval}"
@@ -48,3 +49,10 @@ class BinanceController:
             return await self.binance_service.get_server_time()
         except RuntimeError as e:
             raise HTTPException(status_code=500, detail=str(e))
+
+    async def account_info(self):
+        await self.binance_service.get_account_info()
+        # try:
+        #     return await self.binance_service.get_account_info()
+        # except RuntimeError as e:
+        #     raise HTTPException(status_code=500, detail=str(e))

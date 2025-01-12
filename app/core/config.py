@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     secret_key: str
     api_key_test: str
     secret_key_test: str
+    base_websocket_url: str
 
     class Config:
         env_file = ".env"

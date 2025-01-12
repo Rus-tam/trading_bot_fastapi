@@ -1,5 +1,6 @@
 import uuid
 import json
+import time
 import websockets
 from websockets import connect
 from typing import Optional, Callable
@@ -14,16 +15,21 @@ from .schemas import ServerTimeResponce
 class BinanceService:
     def __init__(self):
         self.base_url = f"{settings.base_url}"
+        self.base_websocket_url = f"{settings.base_websocket_url}"
         self.websocket_url = f"{settings.websocket_url}"
         self.http_url = f"{settings.historical_kline_url}"
         self.server_time_url = f"{settings.server_time_url}"
         self.api_key = f"{settings.api_key}"
+        self.secret_key = f"{settings.secret_key}"
         self.connection: Optional[websockets.WebSocketClientProtocol] = None
         self.is_running = False
         self.kline_callback: Optional[Callable[[KlineData], None]] = None
         self.market_processor = MarketProcessor()
         self.binance_utils = BinanceUtils()
         self.crypto = Crypto()
+
+        self.api_key_test = f"{settings.api_key_test}"
+        self.secret_key_test = f"{settings.secret_key_test}"
 
     async def connect(self, symbol: str, interval: str):
         params = {
@@ -95,7 +101,7 @@ class BinanceService:
         return kline_data
 
     async def get_server_time(self) -> ServerTimeResponce:
-        async with connect("wss://ws-api.testnet.binance.vision/ws-api/v3") as ws:
+        async with connect(self.base_websocket_url) as ws:
             # Генерируем уникальный идентификатор
             request_id = str(uuid.uuid4())
             request = {"id": request_id, "method": "time"}
@@ -112,3 +118,41 @@ class BinanceService:
                         return response["result"]
                 except Exception as e:
                     raise RuntimeError("Ошибка получения времени с API") from e
+
+    async def get_account_info(self):
+        server_time = await self.get_server_time()
+        current_server_time = server_time.get("serverTime")
+        params = {
+            "apiKey": self.api_key,
+            # "omitZeroBalances": True,
+            # "recvWindow": 60000,
+            "signature": "",
+            "timestamp": int(current_server_time),
+        }
+        params["signature"] = self.crypto.generate_signature(params=params)
+
+        listen_key = self.crypto.generate_listen_key()
+
+        print("LISTEN KEY", listen_key)
+
+        async with connect(f"{self.websocket_url}/{listen_key}") as ws:
+            request_id = str(uuid.uuid4())
+            request = {"id": request_id, "method": "account.status", "params": params}
+            print("PARAMS", params)
+            print(" ")
+            print("REQUEST", request)
+            print(" ")
+            print("SERVER TIME", server_time)
+            await ws.send(json.dumps(request))
+
+            while True:
+                try:
+                    message = await ws.recv()
+                    response = json.loads(message)
+                    if response.get("id") == request_id and "results" in response:
+                        return response["result"]
+                except Exception as e:
+                    print(" ")
+                    print(e)
+                    print(" ")
+                    raise RuntimeError("Ошибка получения данных с API") from e
