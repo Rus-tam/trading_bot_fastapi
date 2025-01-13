@@ -135,24 +135,24 @@ class BinanceService:
 
         print("LISTEN KEY", listen_key)
 
-        async with connect(f"{self.websocket_url}/{listen_key}") as ws:
-            request_id = str(uuid.uuid4())
-            request = {"id": request_id, "method": "account.status", "params": params}
-            print("PARAMS", params)
-            print(" ")
-            print("REQUEST", request)
-            print(" ")
-            print("SERVER TIME", server_time)
-            await ws.send(json.dumps(request))
+        # async with connect(f"{self.websocket_url}/{listen_key}") as ws:
+        #     request_id = str(uuid.uuid4())
+        #     request = {"id": request_id, "method": "account.status", "params": params}
+        #     print("PARAMS", params)
+        #     print(" ")
+        #     print("REQUEST", request)
+        #     print(" ")
+        #     print("SERVER TIME", server_time)
+        #     await ws.send(json.dumps(request))
 
-            while True:
-                try:
-                    message = await ws.recv()
-                    response = json.loads(message)
-                    if response.get("id") == request_id and "results" in response:
-                        return response["result"]
-                except Exception as e:
-                    print(" ")
-                    print(e)
-                    print(" ")
-                    raise RuntimeError("Ошибка получения данных с API") from e
+        #     while True:
+        #         try:
+        #             message = await ws.recv()
+        #             response = json.loads(message)
+        #             if response.get("id") == request_id and "results" in response:
+        #                 return response["result"]
+        #         except Exception as e:
+        #             print(" ")
+        #             print(e)
+        #             print(" ")
+        #             raise RuntimeError("Ошибка получения данных с API") from e

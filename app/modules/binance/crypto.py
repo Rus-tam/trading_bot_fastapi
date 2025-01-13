@@ -2,6 +2,9 @@ import hmac
 import hashlib
 from ...core.config import settings
 import requests
+import datetime
+import json
+import os
 
 
 class Crypto:
@@ -40,13 +43,34 @@ class Crypto:
         return signature
 
     def generate_listen_key(self) -> str:
+        file_name = "listen_key.json"
         url = f"{self.base_url}/api/v3/userDataStream"
         headers = {"X-MBX-APIKEY": self.api_key}
+
+        if not os.path.isfile(file_name):
+            print(f"Файл {file_name} не найден. Приступаю к созданию файла")
+
+            default_data = {"listenKey": "", "timestamp": 0}
+
+            with open(file_name, "w") as json_file:
+                json.dump(default_data, json_file, indent=4, ensure_ascii=False)
+            print(f"Файл {file_name} успешно создан")
+        else:
+            print(f"Файл {file_name} уже существует")
 
         try:
             response = requests.post(url, headers=headers)
             response.raise_for_status()  # Проверяем наличие ошибок
             listen_key = response.json().get("listenKey")
+            current_time = datetime.datetime.now()
+            data_to_json = {
+                "listenKey": listen_key,
+                "timestamp": int(current_time.timestamp() * 1000),
+            }
+
+            with open(file_name, "w") as json_file:
+                json.dump(data_to_json, json_file, indent=4, ensure_ascii=False)
+
             return listen_key
         except requests.exceptions.RequestException as e:
             print("Error generating listenKey:", e)
